@@ -747,7 +747,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithValidBootnodeMustSuccess() {
+  public void callingWithValidBootnodeMustSucceed() {
     parseCommand(
         "--bootnodes",
         "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304");
