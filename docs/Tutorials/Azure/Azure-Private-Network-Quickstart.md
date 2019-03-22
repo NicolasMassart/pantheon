@@ -1,231 +1,222 @@
 description: Pantheon private network quickstart on Azure tutorial
 <!--- END of page meta data -->
 
-# Azure Private Network Quickstart tutorial
+# Azure Private Network Quickstart Tutorial
 
 This tutorial describes how to use the [Pantheon quickstart](https://github.com/PegaSysEng/pantheon-quickstart) 
 to run a private network of Pantheon nodes in a Docker container in a Linux Virtual 
 machine hosted on Microsoft Azure.
 
-## Tutorial Duration
+## Duration
 
-**Minimum duration : around 20 minutes.**
+**Duration : Approximately 20 minutes**
 
-This minimum duration includes the Azure resources deployment, usually around 5 minutes, but it
-can vary depending on many factors. 
+The duration includes the Azure resources deployment (usually around 5 minutes) but it can vary. 
+This tutorial contains some optional steps that will increase the duration.
 
-This tutorial also contains some optional steps that may raise the duration up to 1 hour.
+## Steps
 
-## Tutorial Steps
-
-* Step 1 - [Fulfill requirements](#requirements).
-    * Up to 20 minutes if you don't have any of the requirements installed.
-    * Otherwise just checking them and go to the next step will take 1 minute.
-* Step 2 - [Deploy the Quickstart](#deploy-the-quickstart).
-    * One Click Deploy : 5 minutes.
-    * Manually : 15 minutes.
-* Step 3 - [Access the Light Explorer](#accessing-the-alethio-ethstat-light-explorer).
-    * 2 minutes.
+* Step 1 - [Requirements](#requirements)
+    * Up to 20 minutes if you need to install requirements
+* Step 2 - [Deploy the Quickstart](#deploy-the-quickstart)
+    * One Click Deploy : 5 minutes
+    * Manually : 15 minutes
+* Step 3 - [Access the Lite Block Explorer](#accessing-the-alethio-ethstats-lite-block-explorer).
+    * 2 minutes
 * Step 4 (optional) - [Copy endpoints and continue from here by following our Docker Quickstart Tutorial](#rpc-enpoints).
-    * Around 10 minutes.
+    * Up to 10 minutes
 * Step 5 - [Shut down the Azure Quickstart resources](#shutting-down-the-quickstart)
-    * From 1 to 10 minutes depending on the method you will choose.
+    * Up to 10 minutes depending on the method
 
 ## Requirements
 
-* An azure account. A [free trial account](https://azure.microsoft.com/en-us/free/) will work for this tutorial.
-* Be able to connect to a remote console using SSH. If you use Linux or macOS, you already have one 
-integrated, otherwise you can try tools like [Putty](https://www.putty.org/) (free; open-source), 
-[mRemoteNG](https://mremoteng.org/) (free; open-source), 
-[Terminals](https://github.com/terminals-Origin/Terminals) (free; open-source)
-or [MobaXterm](https://mobaxterm.mobatek.net/) (free; paid Pro version available).
+* Azure account. A [free trial account](https://azure.microsoft.com/en-us/free/) can be used for this tutorial.
+* If not using Linux or MacOS, a tool to connect to a remote console using SSH. Free tools include:
+     * [Putty](https://www.putty.org/)  
+     * [mRemoteNG](https://mremoteng.org/) 
+     * [Terminals](https://github.com/terminals-Origin/Terminals)
 
 ## Deploy the Quickstart
 
 ### One Click Deploy
 
-You can deploy Pantheon Quickstart on [Microsoft Azure](https://azure.microsoft.com) simply by
-clicking the button bellow.
-
-You will be asked to log on Azure Portal first if you are not already logged in and you will be 
-redirected to the deployment form.
-
-???info "How to fill the Azure deployment form"
-    * **Subscription** : keep default value if you don't know what to choose.
-    * **Resource group** : click on **Create new** and enter `pantheon-quickstart`.
-    * **Vm Name** : keep the default
-    * **Admin Username** : keep the default
-    * **Admin Password** : create a new password between 12 and 72 characters with numbers, upper-cased 
-    and lower-cased letters and a special symbol.
-    * **Vm Size** : Standard DS2s v3 is the minimum usable size for this quickstart.
+Deploy the Pantheon Quickstart on [Microsoft Azure](https://azure.microsoft.com) by clicking the button below.
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FNicolasMassart%2Fpantheon-quickstart%2Fazure_deploy_button%2Fazure%2Fazuredeploy.json)
 
+If prompted to log in to the Azure Portal, log in before being redirected to the deployment form.  
+
+???info "Filling in the Azure Deployment Form"
+    * **Subscription** : Default
+    * **Resource group** : Click **Create new** and enter `pantheon-quickstart`
+    * **Vm Name** : Default
+    * **Admin Username** : Default
+    * **Admin Password** : Create a password between 12 and 72 characters with numbers, lower and upper-case
+      letters, and a special symbol
+    * **Vm Size** : Standard DS2s v3 is the minimum usable size for this quickstart.
+
 ### Deploy Manually
 
-If you still want to manually control each step, unfold the instructions bellow.
+To deploy manually instead of using the [One Click Deploy](#one-click-deploy), expand the 
+instructions. 
 
 ???example "Manual Deployment Steps"
 
     #### Connect to Azure Portal
-    Log in to [Azure portal](https://portal.azure.com/) using your account credentials.
+    Log into [Azure portal](https://portal.azure.com/) using your account credentials.
     
     #### Create Resources
-    On the home page, click on ![Create resource button](create-resource-button-screenshot.png)
-    at the top left hand corner.
+    On the home page, click **Create resource button** at the top left hand corner.
     
     Search the Marketplace for **Ubuntu Server 18.04 LTS** by Canonical and click on it. 
     An information page is displayed. Accept the default deployment model of Resource Manager and click **Create**.
     
-    In **Create a virtual machine**, set the following values for each tab as follows::
+    In **Create a virtual machine**, set the following values for each tab:
     
     ##### Basics Step
     
-      * Subscription --> free trial
-      * Resource group --> create a new one and call it as you like, "pantheon-quickstart" may be a good name.
+      * Subscription --> Free trial
+      * Resource group --> Create a group and name it. For example, pantheon-quickstart
       * Virtual machine name --> quickstart
-      * Region --> **Central US** will probably selected by default, don't bother changing it.
+      * Region --> Default
       * Availability options --> No infrastructure redundancy required
       * Image --> Ubuntu Server 18.04 LTS
-      * Size --> You can keep the proposed hosting plan size as this quickstart won't require a lot 
-      of power and disk space. A **Standard D2s v3 (2 vcpus, 8 GB memory)** will do the job and will be 
-      less expensive.
-      * Authentication type --> choose the one you prefer, as this is not a critical machine, you can just
-      use a password, but a SSH public key is nice too and simpler if you have one.
-      * Username --> provide a user name, here we propose **azure** as a user name and we'll use it all 
-      along this tutorial.
-      * Depending on the authentication method you chose, either fill the password or the public key.
-      * Login with Azure Acrive Directory --> keep it **off**
+      * Size --> Default. The quickstart doesn't require a lot of power and disk space. 
+        A **Standard D2s v3 (2 vcpus, 8 GB memory)** is enough and is less expensive.
+      * Authentication type --> Choose the one you prefer
+      * Username --> Provide a user name. **azure** is used for this tutorial.
+      * Depending on the authentication method, enter the password or the public key.
+      * Login with Azure Active Directory --> **off**
       * Public inbound ports --> Allow selected ports
-      * Select inbound ports --> select **HTTP** and **SSH**
+      * Select inbound ports --> Select **HTTP** and **SSH**
       
-    Then go up on the top of the page and switch to the **Guest config** step tab.
+    At the top of the page, select the **Guest config** tab.
     
     ##### Guest Config
     
-    This step aims at installing required software (Docker and Docker-compose) on your virtual machine 
-    and retrieve and run the quickstart private network.
+    This step installs the required software (Docker and Docker-compose) on your virtual machine 
+    and retrieves and runs the quickstart private network.
     
-    To do so, click on the link named **Select an extension to install** and a new resource pane will
-    appear on the right.
+    1. Click on the **Select an extension to install** link and a new resource pane is displayed on the right.
     
-    In the list click on **Custom Script For Linux**, another pane opens with a blue **Create** button at
-    its bottom, click on it.
+    1. In the list, click **Custom Script For Linux**. Another pane is displayed with a blue **Create** button at
+    the bottom. 
     
-    A form with only two fields appear:
+    1. Click the blue **Create** button. A form with two fields is displayed. 
     
-    First open another browser tab or window with [https://raw.githubusercontent.com/PegaSysEng/pantheon-quickstart/master/azure/install_and_run.sh](https://raw.githubusercontent.com/PegaSysEng/pantheon-quickstart/master/azure/install_and_run.sh)
+    1. In another browser tab or window, open [https://raw.githubusercontent.com/PegaSysEng/pantheon-quickstart/master/azure/install_and_run.sh](https://raw.githubusercontent.com/PegaSysEng/pantheon-quickstart/master/azure/install_and_run.sh)
     
-    Save (++ctrl+s++) this script to your computer, anywhere you like, as install_and_run.sh. 
+    1. Save (++ctrl+s++) this script to your computer, in any location, called `install_and_run.sh`. 
     
-    Then click on the **Script files** field, and once the file browsing dialog appear, select the `install_and_run.sh` 
-    you just saved.
+    1. Click on the **Script files** field and select the `install_and_run.sh` script you saved.
     
-    Fill the second field named **Command** with the following informations (replacing the pre filled `sh script.sh`):
+    1. In the **Command** field, enter (replacing the pre filled `sh script.sh`):
     
-    ```bash
-    sh install_and_run.sh azure
-    ```
+        ```bash
+        sh install_and_run.sh azure
+        ```
     
-    !!!important
-        The username is included at the end of this command, **azure** in our case, but change
-        to whatever you defined on the Basics step if you did not use the same as us.
+        !!!important
+            The username is included at the end of this command, **azure** in this example. Use the
+            username defined in the Basics step.
         
-    Then click **Ok** and then on the **Review + create** blue button at the bottom.
+    1. Click **Ok**. 
+     
+    1. Click the **Review + create** blue button at the bottom of the page.
     
-    Then once everything is ok (a green **Validation passed** message should show on the top of the screen), 
+    1. When the green **Validation passed** message is displayed at the top of the screen, 
     press the blue **Create** button.
 
 ## Access Resources
 
-Now that your Quickstart is deploying, you should see a **Your deployment is underway** screen 
-with all the resources creating. It takes some time, around 5mn, so be patient and have a 
-nice :tea: or :coffee:.
+Now your Quickstart is deploying, a **Your deployment is underway** screen is displayed.
+The deployment takes approximately 5 minutes. 
 
-Once this deployment is done, you will see **Your deployment is complete** and a list of all the
-deployed resources with green check-marks.
+Once the deployment is complete, **Your deployment is complete** is displayed with a list of deployed resources.
 
 ![Your deployment is complete screenshot](deployment-complete-screenshot.png)
 
-CLick on the **quickstart** resource (the VM) in the list and you'll land on the virtual
-machine overview page.
+CLick the **quickstart** resource (the VM) in the list. The machine overview page is displayed.
 
-## Accessing the Alethio EthStat-light Explorer
+## Accessing the Alethio EthStats Lite Block Explorer
 
-On the right part of the virtual machine page you can read the **Public IP address** of this machine. 
-Copy it then open a new browser tab or window and past it in the navigation bar.
+On the right of the virtual machine page, the **Public IP address** of this machine is displayed. 
+Copy the public IP address and copy it into the navigation bar of a new browser tab or window.
 
-You now should see the the EthStat-light explorer.
-Wait a few seconds and you should see 6 peers indicated and a few blocks mined.
+The EthStats Lite Block Explorer is displayed.
+Wait a few seconds and 6 peers and the blocks mined are displayed.
 
 ![Alethio EthStat-light explorer](alethio-light-explorer-screenshot.png)
 
-## Rpc Enpoints
+## RPC Endpoints
 
-For the following optional tutorial steps, you will have to know that your RPC endpoints are the
-following :
+For the following optional tutorial steps, the RPC endpoints are:
 
-* for the HTTP RPC endpoint: **http://&lt;your VM public IP>/jsonrpc**
-* for the Web Socket RPC endpoint: **ws://&lt;your VM public IP>/jsonws**
+* HTTP RPC endpoint: **http://&lt;your VM public IP>/jsonrpc**
+* WebSocket RPC endpoint: **ws://&lt;your VM public IP>/jsonws**
 
 ## Optional Private Network Tutorial
 
-You can now follow the [private network quickstart tutorial starting from 
-the part where we show how to create RPC requests](../../Tutorials/Private-Network-Quickstart.md#run-json-rpc-requests).
+Follow the [private network quickstart tutorial starting from creating RPC requests](../../Tutorials/Private-Network-Quickstart.md#run-json-rpc-requests).
 
-Then come back here to finish the tutorial to shut down your resources.
+When complete, resume this tutorial to shut down your resources.
 
 ## Shutting Down the Quickstart
 
 !!!attention
-    Don't forget to shutdown the quickstart it you don't need it as it will consume your Azure resources
-    and that can be expensive of at least drain your free credits from your free trial account.
+    Don't forget to shutdown the quickstart because it will consume your Azure resources
+    and that can be expensive or drain free credits from your trial account.
 
-You have multiple ways to shutdown the quickstart depending on if you want to restart it
-from scratch after that or continue using the same installation. Here are the options:
+Options for shutting down are:
 
-### I Want to Remove Everything From My Azure Account.
+### I Want to Remove Everything From My Azure Account
 
-This is the easiest way to be sure your Azure resources won't consume any credits.
+This is the easiest way to ensure your Azure resources won't consume any credits.
 
-To do so, simply navigate in the Azure portal to your resource group, the one we named **pantheon-quickstart**
-then click on the **Delete resource group** button.
+In the Azure portal, navigate to your resource group (for example, **pantheon-quickstart**) and 
+click the **Delete resource group** button.
 
-### I Want to Remove the Virtual Machine Only.
+### I Want to Remove the Virtual Machine Only
 
-Then simply navigate in the Azure portal to your resource group, the one we named **pantheon-quickstart**
-then click on the virtual machine resource and click the **Delete** button.
+In the Azure portal, navigate to your resource group (for example, **pantheon-quickstart**) and
+click the virtual machine resource and click the **Delete** button.
 
-### I Want to Keep the Virtual Machine but Remove the Nodes Network.
+### I Want to Keep the Virtual Machine but Remove the Pantheon Network
 
-Navigate to the VM in your Azure portal (click on **All services** in the left pane, then on 
-**Virtual machines** and click on the one you named **quickstart**) and click the **connect** 
-button that will give you the information to connect with SSH (see [Requirements](#requirements)).
+1. In the Azure portal, navigate to the VM:
+     1. Click **All services** in the left pane
+     1. Click **Virtual machines**
+     1. Click VM you named **quickstart**
+     
+1. Click the **connect** button to obtain the information to connect with SSH (see [Requirements](#requirements)).
 
-Once connected to the machine, navigate to the pantheon-quickstart directory:
-```bash
-cd pantheon-quickstart
-``` 
-then run the remove script
-```bash
-./remove.sh
-```
+1. Once connected to the machine, go to the `pantheon-quickstart` directory:
+    ```bash
+    cd pantheon-quickstart
+    ``` 
 
-If you want to run the network again, then you can use the following script:
-```bash
-./run.sh -p 80
-```
+1. Run the remove script:
+    ```bash
+    ./remove.sh
+    ```
 
-Where 80 is the port number to use for Block Explorer and RPC connections.
+1. To run the network again, use the following script:
+
+    ```bash
+    ./run.sh -p 80
+   ```
+
+    Where 80 is the port number for the Block Explorer and RPC connections.
  
-### I Just Want to Stop the Nodes Network and Be Able to Resume It.
+### I Want to Stop the Pantheon Network and Be Able to Resume It
 
-Connect to the VM using SSH like for "[I want to keep the VM but remove the nodes network.](#i-want-to-keep-the-vm-but-remove-the-nodes-network)"
-but instead of running the remove script, run the stop script.
+Connect to the VM using SSH as for [I want to keep the VM but remove the nodes network](#i-want-to-keep-the-vm-but-remove-the-nodes-network)
+but instead of running the remove script, run the stop script:
 ```bash
 ./stop.sh
 ```
-you will be then able to resume the network with
+
+To resume the network:
 ```bash
 ./resume.sh
 ```
