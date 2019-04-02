@@ -24,7 +24,6 @@ if (env.BRANCH_NAME == "master") {
 
 def docker_image = 'docker:18.06.0-ce-dind'
 def build_image = 'pegasyseng/pantheon-build:0.0.5-jdk11'
-def doc_build_image = 'python:3-alpine'
 
 def abortPreviousBuilds() {
     Run previousBuild = currentBuild.rawBuild.getPreviousBuildInProgress()
@@ -46,127 +45,123 @@ def abortPreviousBuilds() {
 
 abortPreviousBuilds()
 
-//try {
-//    parallel UnitTests: {
-//        def stage_name = "Unit tests node: "
-//        node {
-//            checkout scm
-//            docker.image(docker_image).withRun('--privileged') { d ->
-//                docker.image(build_image).inside("--link ${d.id}:docker") {
-//                    try {
-//                        stage(stage_name + 'Prepare') {
-//                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
-//                        }
-//                        stage(stage_name + 'Unit tests') {
-//                            sh './gradlew --no-daemon --parallel build'
-//                        }
-//                    } finally {
-//                        archiveArtifacts '**/build/reports/**'
-//                        archiveArtifacts '**/build/test-results/**'
-//                        archiveArtifacts 'build/reports/**'
-//                        archiveArtifacts 'build/distributions/**'
-//
-//                        junit '**/build/test-results/**/*.xml'
-//                    }
-//                }
-//            }
-//        }
-//    }, ReferenceTests: {
-//        def stage_name = "Reference tests node: "
-//        node {
-//            checkout scm
-//            docker.image(docker_image).withRun('--privileged') { d ->
-//                docker.image(build_image).inside("--link ${d.id}:docker") {
-//                    try {
-//                        stage(stage_name + 'Prepare') {
-//                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
-//                        }
-//                        stage(stage_name + 'Reference tests') {
-//                            sh './gradlew --no-daemon --parallel referenceTest'
-//                        }
-//                    } finally {
-//                        archiveArtifacts '**/build/reports/**'
-//                        archiveArtifacts '**/build/test-results/**'
-//                        archiveArtifacts 'build/reports/**'
-//                        archiveArtifacts 'build/distributions/**'
-//
-//                        junit '**/build/test-results/**/*.xml'
-//                    }
-//                }
-//            }
-//        }
-//    }, IntegrationTests: {
-//        def stage_name = "Integration tests node: "
-//        node {
-//            checkout scm
-//            docker.image(docker_image).withRun('--privileged') { d ->
-//                docker.image(build_image).inside("--link ${d.id}:docker") {
-//                    try {
-//                        stage(stage_name + 'Prepare') {
-//                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
-//                        }
-//                        stage(stage_name + 'Integration Tests') {
-//                            sh './gradlew --no-daemon --parallel integrationTest'
-//                        }
-//                        stage(stage_name + 'Check Licenses') {
-//                            sh './gradlew --no-daemon --parallel checkLicenses'
-//                        }
-//                        stage(stage_name + 'Check javadoc') {
-//                            sh './gradlew --no-daemon --parallel javadoc'
-//                        }
-//                        stage(stage_name + 'Compile Benchmarks') {
-//                            sh './gradlew --no-daemon --parallel compileJmh'
-//                        }
-//                    } finally {
-//                        archiveArtifacts '**/build/reports/**'
-//                        archiveArtifacts '**/build/test-results/**'
-//                        archiveArtifacts 'build/reports/**'
-//                        archiveArtifacts 'build/distributions/**'
-//
-//                        junit '**/build/test-results/**/*.xml'
-//                    }
-//                }
-//            }
-//        }
-//    }, AcceptanceTests: {
-//        def stage_name = "Acceptance tests node: "
-//        node {
-//            checkout scm
-//            docker.image(docker_image).withRun('--privileged') { d ->
-//                docker.image(build_image).inside("--link ${d.id}:docker") {
-//                    try {
-//                        stage(stage_name + 'Prepare') {
-//                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
-//                        }
-//                        stage(stage_name + 'Acceptance Tests') {
-//                            sh './gradlew --no-daemon --parallel acceptanceTest'
-//                        }
-//                    } finally {
-//                        archiveArtifacts '**/build/reports/**'
-//                        archiveArtifacts '**/build/test-results/**'
-//                        archiveArtifacts 'build/reports/**'
-//                        archiveArtifacts 'build/distributions/**'
-//
-//                        junit '**/build/test-results/**/*.xml'
-//                    }
-//                }
-//            }
-//        }
-//    }, DocTests: {
 try {
-    parallel DocTests: {
-        def stage_name = "Documentation tests node: "
+    parallel UnitTests: {
+        def stage_name = "Unit tests node: "
         node {
             checkout scm
             docker.image(docker_image).withRun('--privileged') { d ->
-                docker.image(doc_build_image).inside("--link ${d.id}:docker") {
+                docker.image(build_image).inside("--link ${d.id}:docker") {
                     try {
-                        stage(stage_name + 'Build') {
-                            sh 'pip install -r docs/requirements.txt'
-                            sh 'mkdocs build -s'
+                        stage(stage_name + 'Prepare') {
+                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
                         }
-                    }catch(e){
-                        throw e;
+                        stage(stage_name + 'Unit tests') {
+                            sh './gradlew --no-daemon --parallel build'
+                        }
+                    } finally {
+                        archiveArtifacts '**/build/reports/**'
+                        archiveArtifacts '**/build/test-results/**'
+                        archiveArtifacts 'build/reports/**'
+                        archiveArtifacts 'build/distributions/**'
+
+                        junit '**/build/test-results/**/*.xml'
+                    }
+                }
+            }
+        }
+    }, ReferenceTests: {
+        def stage_name = "Reference tests node: "
+        node {
+            checkout scm
+            docker.image(docker_image).withRun('--privileged') { d ->
+                docker.image(build_image).inside("--link ${d.id}:docker") {
+                    try {
+                        stage(stage_name + 'Prepare') {
+                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
+                        }
+                        stage(stage_name + 'Reference tests') {
+                            sh './gradlew --no-daemon --parallel referenceTest'
+                        }
+                    } finally {
+                        archiveArtifacts '**/build/reports/**'
+                        archiveArtifacts '**/build/test-results/**'
+                        archiveArtifacts 'build/reports/**'
+                        archiveArtifacts 'build/distributions/**'
+
+                        junit '**/build/test-results/**/*.xml'
+                    }
+                }
+            }
+        }
+    }, IntegrationTests: {
+        def stage_name = "Integration tests node: "
+        node {
+            checkout scm
+            docker.image(docker_image).withRun('--privileged') { d ->
+                docker.image(build_image).inside("--link ${d.id}:docker") {
+                    try {
+                        stage(stage_name + 'Prepare') {
+                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
+                        }
+                        stage(stage_name + 'Integration Tests') {
+                            sh './gradlew --no-daemon --parallel integrationTest'
+                        }
+                        stage(stage_name + 'Check Licenses') {
+                            sh './gradlew --no-daemon --parallel checkLicenses'
+                        }
+                        stage(stage_name + 'Check javadoc') {
+                            sh './gradlew --no-daemon --parallel javadoc'
+                        }
+                        stage(stage_name + 'Compile Benchmarks') {
+                            sh './gradlew --no-daemon --parallel compileJmh'
+                        }
+                    } finally {
+                        archiveArtifacts '**/build/reports/**'
+                        archiveArtifacts '**/build/test-results/**'
+                        archiveArtifacts 'build/reports/**'
+                        archiveArtifacts 'build/distributions/**'
+
+                        junit '**/build/test-results/**/*.xml'
+                    }
+                }
+            }
+        }
+    }, AcceptanceTests: {
+        def stage_name = "Acceptance tests node: "
+        node {
+            checkout scm
+            docker.image(docker_image).withRun('--privileged') { d ->
+                docker.image(build_image).inside("--link ${d.id}:docker") {
+                    try {
+                        stage(stage_name + 'Prepare') {
+                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
+                        }
+                        stage(stage_name + 'Acceptance Tests') {
+                            sh './gradlew --no-daemon --parallel acceptanceTest'
+                        }
+                    } finally {
+                        archiveArtifacts '**/build/reports/**'
+                        archiveArtifacts '**/build/test-results/**'
+                        archiveArtifacts 'build/reports/**'
+                        archiveArtifacts 'build/distributions/**'
+
+                        junit '**/build/test-results/**/*.xml'
+                    }
+                }
+            }
+        }
+    }, DocTests: {
+        def stage_name = "Documentation tests node: "
+        node {
+            checkout scm
+            stage(stage_name + 'Build') {
+                def container = docker.image("python:3-alpine").inside() {
+                    try {
+                        sh 'pip install -r docs/requirements.txt'
+                        sh 'mkdocs build -s'
+                    } catch(e) {
+                        throw e
                     }
                 }
             }
