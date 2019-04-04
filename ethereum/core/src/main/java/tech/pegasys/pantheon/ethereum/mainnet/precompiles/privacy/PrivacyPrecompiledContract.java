@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.mainnet.precompiles.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static tech.pegasys.pantheon.crypto.Hash.keccak256;
 
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
@@ -59,7 +60,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
     this(
         gasCalculator,
-        privacyParameters.getPublicKey(),
+        privacyParameters.getEnclavePublicKey(),
         new Enclave(privacyParameters.getUrl()),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateTransactionStorage(),
@@ -105,9 +106,9 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
 
       WorldUpdater publicWorldState = messageFrame.getWorldState();
-      // get the last world state root hash - or create a new one
-      BytesValue privacyGroupId = BytesValue.wrap("0".getBytes(UTF_8));
 
+      BytesValue privacyGroupId = BytesValue.wrap(receiveResponse.getPrivacyGroupId());
+      // get the last world state root hash - or create a new one
       Hash lastRootHash =
           privateStateStorage.getPrivateAccountState(privacyGroupId).orElse(EMPTY_ROOT_HASH);
       MutableWorldState disposablePrivateState =
@@ -130,18 +131,20 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         throw new Exception("Unable to process the private transaction");
       }
 
-      privateWorldStateUpdater.commit();
-      disposablePrivateState.persist();
-      PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-      privateStateUpdater.putPrivateAccountState(privacyGroupId, disposablePrivateState.rootHash());
-      privateStateUpdater.commit();
+      if (messageFrame.isPersistingState()) {
+        privateWorldStateUpdater.commit();
+        disposablePrivateState.persist();
+        PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
+        privateStateUpdater.putPrivateAccountState(
+            privacyGroupId, disposablePrivateState.rootHash());
+        privateStateUpdater.commit();
 
-      BytesValue rlpEncoded = RLP.encode(privateTransaction::writeTo);
-      Bytes32 txHash = tech.pegasys.pantheon.crypto.Hash.keccak256(rlpEncoded);
-      PrivateTransactionStorage.Updater privateUpdater = privateTransactionStorage.updater();
-      privateUpdater.putTransactionLogs(txHash, result.getLogs());
-      privateUpdater.putTransactionResult(txHash, result.getOutput());
-      privateUpdater.commit();
+        Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
+        PrivateTransactionStorage.Updater privateUpdater = privateTransactionStorage.updater();
+        privateUpdater.putTransactionLogs(txHash, result.getLogs());
+        privateUpdater.putTransactionResult(txHash, result.getOutput());
+        privateUpdater.commit();
+      }
 
       return result.getOutput();
     } catch (IOException e) {

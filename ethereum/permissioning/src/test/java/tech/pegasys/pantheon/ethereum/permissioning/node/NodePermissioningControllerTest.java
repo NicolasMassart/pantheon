@@ -15,6 +15,9 @@ package tech.pegasys.pantheon.ethereum.permissioning.node;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.node.provider.SyncStatusNode
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,7 +66,7 @@ public class NodePermissioningControllerTest {
   public void isPermittedShouldDelegateToSyncStatusProvider() {
     controller.isPermitted(enode1, enode2);
 
-    verify(syncStatusNodePermissioningProvider).isPermitted(eq(enode1), eq(enode2));
+    verify(syncStatusNodePermissioningProvider, atLeast(1)).isPermitted(eq(enode1), eq(enode2));
   }
 
   @Test
@@ -70,6 +74,16 @@ public class NodePermissioningControllerTest {
     controller.startPeerDiscoveryCallback(() -> {});
 
     verify(syncStatusNodePermissioningProvider).setHasReachedSyncCallback(any(Runnable.class));
+  }
+
+  @Test
+  public void peerDiscoveryCallbackShouldRunWhenSyncStatusProviderDoesNotExist() {
+    final Runnable callback = mock(Runnable.class);
+
+    controller = new NodePermissioningController(Optional.empty(), Collections.emptyList());
+    controller.startPeerDiscoveryCallback(callback);
+
+    verify(callback).run();
   }
 
   @Test
@@ -91,6 +105,7 @@ public class NodePermissioningControllerTest {
         new NodePermissioningController(syncStatusNodePermissioningProviderOptional, providers);
 
     when(syncStatusNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
+    when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
     when(localConfigNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
     when(otherPermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
 
@@ -117,6 +132,7 @@ public class NodePermissioningControllerTest {
         new NodePermissioningController(syncStatusNodePermissioningProviderOptional, providers);
 
     when(syncStatusNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
+    when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
     when(localConfigNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
     when(otherPermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(false);
 
@@ -125,5 +141,53 @@ public class NodePermissioningControllerTest {
     verify(syncStatusNodePermissioningProvider).isPermitted(eq(enode1), eq(enode2));
     verify(localConfigNodePermissioningProvider).isPermitted(eq(enode1), eq(enode2));
     verify(otherPermissioningProvider).isPermitted(eq(enode1), eq(enode2));
+  }
+
+  @Test
+  public void shouldStopAtInsufficientPeersWhenInsufficientAndBootnode() {
+    final List<NodePermissioningProvider> providers = getNodePermissioningProviders();
+
+    this.controller =
+        new NodePermissioningController(syncStatusNodePermissioningProviderOptional, providers);
+
+    final ContextualNodePermissioningProvider insufficientPeersPermissioningProvider =
+        mock(ContextualNodePermissioningProvider.class);
+
+    when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
+    when(insufficientPeersPermissioningProvider.isPermitted(eq(enode1), eq(enode2)))
+        .thenReturn(Optional.of(true));
+
+    controller.setInsufficientPeersPermissioningProvider(insufficientPeersPermissioningProvider);
+
+    assertThat(controller.isPermitted(enode1, enode2)).isTrue();
+
+    verify(insufficientPeersPermissioningProvider, times(1)).isPermitted(any(), any());
+    providers.forEach(p -> verify(p, times(0)).isPermitted(any(), any()));
+  }
+
+  @Test
+  public void doesntStopAtInsufficientPeersWhenNoAnswer() {
+    final List<NodePermissioningProvider> providers = getNodePermissioningProviders();
+
+    this.controller =
+        new NodePermissioningController(syncStatusNodePermissioningProviderOptional, providers);
+
+    final ContextualNodePermissioningProvider insufficientPeersPermissioningProvider =
+        mock(ContextualNodePermissioningProvider.class);
+
+    when(syncStatusNodePermissioningProvider.isPermitted(any(), any())).thenReturn(true);
+    when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
+    when(insufficientPeersPermissioningProvider.isPermitted(any(), any()))
+        .thenReturn(Optional.empty());
+    when(localConfigNodePermissioningProvider.isPermitted(any(), any())).thenReturn(true);
+    when(otherPermissioningProvider.isPermitted(any(), any())).thenReturn(true);
+
+    controller.setInsufficientPeersPermissioningProvider(insufficientPeersPermissioningProvider);
+
+    assertThat(controller.isPermitted(enode1, enode2)).isTrue();
+
+    verify(syncStatusNodePermissioningProvider, times(1)).isPermitted(any(), any());
+    verify(insufficientPeersPermissioningProvider, times(1)).isPermitted(any(), any());
+    providers.forEach(p -> verify(p, times(1)).isPermitted(any(), any()));
   }
 }

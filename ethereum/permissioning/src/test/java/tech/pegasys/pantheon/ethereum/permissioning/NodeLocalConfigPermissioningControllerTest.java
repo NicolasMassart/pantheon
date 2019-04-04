@@ -82,17 +82,6 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void whenAddNodesInputContainsSelfShouldReturnAddingSelfError() {
-    controller.addNodes(Arrays.asList(enode1));
-
-    NodesWhitelistResult expected =
-        new NodesWhitelistResult(WhitelistOperationResult.ERROR_SELF_CANNOT_BE_ADDED);
-    NodesWhitelistResult actualResult = controller.addNodes(Lists.newArrayList(selfEnode, enode1));
-
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
-  }
-
-  @Test
   public void whenAddNodesInputHasExistingNodeShouldReturnAddErrorExistingEntry() {
     controller.addNodes(Arrays.asList(enode1));
 
@@ -192,7 +181,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void whenNodesUdpPortsAreDifferentItShouldNotBePermitted() {
+  public void whenNodesListeningPortsAreDifferentItShouldNotBePermitted() {
     String peer1 =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30301";
     String peer2 =
@@ -204,27 +193,27 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void whenCheckingIfNodeIsPermittedTcpPortShouldNotBeConsideredIfAbsent() {
-    String peerWithTcpPortSet =
+  public void whenCheckingIfNodeIsPermittedDiscoveryPortShouldNotBeConsideredIfAbsent() {
+    String peerWithDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10001";
-    String peerWithoutTcpPortSet =
+    String peerWithoutDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303";
 
-    controller.addNodes(Arrays.asList(peerWithTcpPortSet));
+    controller.addNodes(Arrays.asList(peerWithDiscoveryPortSet));
 
-    assertThat(controller.isPermitted(peerWithoutTcpPortSet)).isTrue();
+    assertThat(controller.isPermitted(peerWithoutDiscoveryPortSet)).isTrue();
   }
 
   @Test
-  public void whenCheckingIfNodeIsPermittedTcpPortShouldBeConsideredIfPresent() {
-    String peerWithTcpPortSet =
+  public void whenCheckingIfNodeIsPermittedDiscoveryPortShouldBeConsideredIfPresent() {
+    String peerWithDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10001";
-    String peerWithDifferentTcpPortSet =
+    String peerWithDifferentDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10002";
 
-    controller.addNodes(Arrays.asList(peerWithDifferentTcpPortSet));
+    controller.addNodes(Arrays.asList(peerWithDifferentDiscoveryPortSet));
 
-    assertThat(controller.isPermitted(peerWithTcpPortSet)).isFalse();
+    assertThat(controller.isPermitted(peerWithDiscoveryPortSet)).isFalse();
   }
 
   @Test
@@ -232,8 +221,6 @@ public class NodeLocalConfigPermissioningControllerTest {
     controller.addNodes(Arrays.asList(enode1));
     assertThat(controller.isPermitted(new EnodeURL(enode1), new EnodeURL(selfEnode))).isTrue();
     assertThat(controller.isPermitted(new EnodeURL(selfEnode), new EnodeURL(enode1))).isTrue();
-
-    assertThat(controller.isPermitted(new EnodeURL(selfEnode), new EnodeURL(selfEnode))).isFalse();
   }
 
   @Test
@@ -266,7 +253,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     final LocalPermissioningConfiguration permissioningConfig =
         mock(LocalPermissioningConfiguration.class);
 
-    when(permissioningConfig.getConfigurationFilePath())
+    when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist())
@@ -287,7 +274,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     final LocalPermissioningConfiguration permissioningConfig =
         mock(LocalPermissioningConfiguration.class);
 
-    when(permissioningConfig.getConfigurationFilePath()).thenReturn("foo");
+    when(permissioningConfig.getNodePermissioningConfigFilePath()).thenReturn("foo");
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist())
         .thenReturn(Arrays.asList(URI.create(expectedEnodeURI)));
@@ -299,7 +286,7 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     assertThat(thrown)
         .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Unable to read permissions TOML config file");
+        .hasMessageContaining("Unable to read permissioning TOML config file");
 
     assertThat(controller.getNodesWhitelist()).containsExactly(expectedEnodeURI);
   }
@@ -385,7 +372,7 @@ public class NodeLocalConfigPermissioningControllerTest {
         new NodeWhitelistUpdatedEvent(
             Lists.newArrayList(new EnodeURL(enode2)), Lists.newArrayList(new EnodeURL(enode1)));
 
-    when(permissioningConfig.getConfigurationFilePath())
+    when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));
@@ -408,7 +395,7 @@ public class NodeLocalConfigPermissioningControllerTest {
         mock(LocalPermissioningConfiguration.class);
     final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
 
-    when(permissioningConfig.getConfigurationFilePath())
+    when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));

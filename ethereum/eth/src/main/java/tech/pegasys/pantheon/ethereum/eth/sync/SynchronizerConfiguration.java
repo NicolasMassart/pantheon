@@ -17,6 +17,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Range;
 
@@ -29,7 +30,9 @@ public class SynchronizerConfiguration {
   private static final Duration DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME = Duration.ofMinutes(5);
   private static final int DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST = 384;
   private static final int DEFAULT_WORLD_STATE_REQUEST_PARALLELISM = 10;
-  private static final int DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS = 100;
+  private static final int DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS = 1000;
+  private static final long DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING =
+      TimeUnit.MINUTES.toMillis(5);
 
   // Fast sync config
   private final int fastSyncPivotDistance;
@@ -53,11 +56,11 @@ public class SynchronizerConfiguration {
   private final int downloaderCheckpointTimeoutsPermitted;
   private final int downloaderChainSegmentTimeoutsPermitted;
   private final int downloaderChainSegmentSize;
-  private final long trailingPeerBlocksBehindThreshold;
-  private final int maxTrailingPeers;
   private final int downloaderParallelism;
   private final int transactionsParallelism;
   private final int computationParallelism;
+  private final int maxTrailingPeers;
+  private final long worldStateMinMillisBeforeStalling;
 
   private SynchronizerConfiguration(
       final int fastSyncPivotDistance,
@@ -67,6 +70,7 @@ public class SynchronizerConfiguration {
       final int worldStateHashCountPerRequest,
       final int worldStateRequestParallelism,
       final int worldStateMaxRequestsWithoutProgress,
+      final long worldStateMinMillisBeforeStalling,
       final Range<Long> blockPropagationRange,
       final SyncMode syncMode,
       final long downloaderChangeTargetThresholdByHeight,
@@ -75,11 +79,10 @@ public class SynchronizerConfiguration {
       final int downloaderCheckpointTimeoutsPermitted,
       final int downloaderChainSegmentTimeoutsPermitted,
       final int downloaderChainSegmentSize,
-      final long trailingPeerBlocksBehindThreshold,
-      final int maxTrailingPeers,
       final int downloaderParallelism,
       final int transactionsParallelism,
-      final int computationParallelism) {
+      final int computationParallelism,
+      final int maxTrailingPeers) {
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
@@ -87,6 +90,7 @@ public class SynchronizerConfiguration {
     this.worldStateHashCountPerRequest = worldStateHashCountPerRequest;
     this.worldStateRequestParallelism = worldStateRequestParallelism;
     this.worldStateMaxRequestsWithoutProgress = worldStateMaxRequestsWithoutProgress;
+    this.worldStateMinMillisBeforeStalling = worldStateMinMillisBeforeStalling;
     this.blockPropagationRange = blockPropagationRange;
     this.syncMode = syncMode;
     this.downloaderChangeTargetThresholdByHeight = downloaderChangeTargetThresholdByHeight;
@@ -95,11 +99,10 @@ public class SynchronizerConfiguration {
     this.downloaderCheckpointTimeoutsPermitted = downloaderCheckpointTimeoutsPermitted;
     this.downloaderChainSegmentTimeoutsPermitted = downloaderChainSegmentTimeoutsPermitted;
     this.downloaderChainSegmentSize = downloaderChainSegmentSize;
-    this.trailingPeerBlocksBehindThreshold = trailingPeerBlocksBehindThreshold;
-    this.maxTrailingPeers = maxTrailingPeers;
     this.downloaderParallelism = downloaderParallelism;
     this.transactionsParallelism = transactionsParallelism;
     this.computationParallelism = computationParallelism;
+    this.maxTrailingPeers = maxTrailingPeers;
   }
 
   public static Builder builder() {
@@ -159,19 +162,6 @@ public class SynchronizerConfiguration {
     return downloaderChainSegmentSize;
   }
 
-  /**
-   * The number of blocks behind we allow a peer to be before considering them a trailing peer.
-   *
-   * @return the maximum number of blocks behind a peer can be while being considered current.
-   */
-  public long trailingPeerBlocksBehindThreshold() {
-    return trailingPeerBlocksBehindThreshold;
-  }
-
-  public int maxTrailingPeers() {
-    return maxTrailingPeers;
-  }
-
   public int downloaderParallelism() {
     return downloaderParallelism;
   }
@@ -215,6 +205,14 @@ public class SynchronizerConfiguration {
     return worldStateMaxRequestsWithoutProgress;
   }
 
+  public long getWorldStateMinMillisBeforeStalling() {
+    return worldStateMinMillisBeforeStalling;
+  }
+
+  public int getMaxTrailingPeers() {
+    return maxTrailingPeers;
+  }
+
   public static class Builder {
     private SyncMode syncMode = SyncMode.FULL;
     private Range<Long> blockPropagationRange = Range.closed(-10L, 30L);
@@ -224,8 +222,6 @@ public class SynchronizerConfiguration {
     private int downloaderCheckpointTimeoutsPermitted = 5;
     private int downloaderChainSegmentTimeoutsPermitted = 5;
     private int downloaderChainSegmentSize = 200;
-    private long trailingPeerBlocksBehindThreshold;
-    private int maxTrailingPeers = Integer.MAX_VALUE;
     private int downloaderParallelism = 4;
     private int transactionsParallelism = 2;
     private int computationParallelism = Runtime.getRuntime().availableProcessors();
@@ -236,7 +232,9 @@ public class SynchronizerConfiguration {
     private int worldStateRequestParallelism = DEFAULT_WORLD_STATE_REQUEST_PARALLELISM;
     private int worldStateMaxRequestsWithoutProgress =
         DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS;
+    private long worldStateMinMillisBeforeStalling = DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING;
     private Duration fastSyncMaximumPeerWaitTime = DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME;
+    private int maxTrailingPeers = Integer.MAX_VALUE;
 
     public Builder fastSyncPivotDistance(final int distance) {
       fastSyncPivotDistance = distance;
@@ -293,16 +291,6 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder trailingPeerBlocksBehindThreshold(final long trailingPeerBlocksBehindThreshold) {
-      this.trailingPeerBlocksBehindThreshold = trailingPeerBlocksBehindThreshold;
-      return this;
-    }
-
-    public Builder maxTrailingPeers(final int maxTrailingPeers) {
-      this.maxTrailingPeers = maxTrailingPeers;
-      return this;
-    }
-
     public Builder downloaderParallelisim(final int downloaderParallelism) {
       this.downloaderParallelism = downloaderParallelism;
       return this;
@@ -344,6 +332,11 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder maxTrailingPeers(final int maxTailingPeers) {
+      this.maxTrailingPeers = maxTailingPeers;
+      return this;
+    }
+
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
           fastSyncPivotDistance,
@@ -353,6 +346,7 @@ public class SynchronizerConfiguration {
           worldStateHashCountPerRequest,
           worldStateRequestParallelism,
           worldStateMaxRequestsWithoutProgress,
+          worldStateMinMillisBeforeStalling,
           blockPropagationRange,
           syncMode,
           downloaderChangeTargetThresholdByHeight,
@@ -361,11 +355,10 @@ public class SynchronizerConfiguration {
           downloaderCheckpointTimeoutsPermitted,
           downloaderChainSegmentTimeoutsPermitted,
           downloaderChainSegmentSize,
-          trailingPeerBlocksBehindThreshold,
-          maxTrailingPeers,
           downloaderParallelism,
           transactionsParallelism,
-          computationParallelism);
+          computationParallelism,
+          maxTrailingPeers);
     }
   }
 }

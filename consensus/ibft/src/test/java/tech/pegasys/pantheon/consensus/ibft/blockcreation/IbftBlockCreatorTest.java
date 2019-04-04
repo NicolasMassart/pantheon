@@ -20,7 +20,6 @@ import static tech.pegasys.pantheon.consensus.ibft.IbftContextBuilder.setupConte
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
-import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
@@ -34,10 +33,13 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -50,6 +52,7 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class IbftBlockCreatorTest {
+  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
   public void createdBlockPassesValidationRulesAndHasAppropriateHashAndMixHash() {
@@ -69,12 +72,11 @@ public class IbftBlockCreatorTest {
       initialValidatorList.add(AddressHelpers.ofValue(i));
     }
 
-    final VoteTally voteTally = new VoteTally(initialValidatorList);
-
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
-                .getConfigOptions());
+                .getConfigOptions(),
+            PrivacyParameters.noPrivacy());
     final ProtocolContext<IbftContext> protContext =
         new ProtocolContext<>(
             blockchain,
@@ -92,7 +94,7 @@ public class IbftBlockCreatorTest {
                         0,
                         initialValidatorList)
                     .encode(),
-            new PendingTransactions(1, TestClock.fixed()),
+            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
             protContext,
             protocolSchedule,
             parentGasLimit -> parentGasLimit,
