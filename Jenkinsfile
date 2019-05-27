@@ -156,6 +156,30 @@ try {
                 }
             }
         }
+    }, KubernetesDockerImage: {
+        def stage_name = "Kubernetes docker image build test node: "
+        node {
+            checkout scm
+            docker.image(build_image).inside() {
+                try {
+                    stage(stage_name) {
+                        sh 'kubernetes/build_image.sh'
+                        shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+                        version = sh(returnStdout: true, script: "grep -oE \"version=(.*)\" gradle.properties | cut -d= -f2").trim()
+                        sh "docker image inspect \
+--format='{{index .Config.Labels \"org.label-schema.vcs-ref\"}}' \
+pegasyseng/pantheon-kubernetes:latest \
+| grep ${shortCommit}"
+                        sh "docker image inspect \
+--format='{{index .Config.Labels \"org.label-schema.version\"}}' \
+pegasyseng/pantheon-kubernetes:latest \
+| grep ${version}"
+                    }
+                } catch (e) {
+                    currentBuild.result = 'FAILURE'
+                }
+            }
+        }
     }, DocTests: {
         def stage_name = "Documentation tests node: "
         node {
