@@ -12,9 +12,13 @@ GOSS_FILES_PATH=tests/01 \
 bash tests/dgoss \
 run $DOCKER_IMAGE \
 --network=dev \
+--p2p-host=0.0.0.0 \
 --rpc-http-enabled \
+--rpc-http-host=0.0.0.0 \
 --rpc-ws-enabled \
+--rpc-ws-host=0.0.0.0 \
 --graphql-http-enabled \
+--graphql-http-host=0.0.0.0 \
 > ./reports/01.xml || i=`expr $i + 1`
 
 exit $i
