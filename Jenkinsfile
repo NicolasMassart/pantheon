@@ -162,6 +162,7 @@ try {
         def kubernetes_folder = 'kubernetes'
         def kubernetes_image_build_script = "${kubernetes_folder}/build_image.sh"
         def version_property_file = 'gradle.properties'
+        def reports_folder = "${kubernetes_folder}/reports"
         node {
             checkout scm
             docker.image(build_image).inside() {
@@ -185,7 +186,7 @@ ${image_tag} \
 | grep ${version}"
                     }
                     stage(stage_name + 'Test image') {
-                        sh "mkdir -p ${kubernetes_folder}/reports"
+                        sh "mkdir -p ${reports_folder}"
                         sh "cd ${kubernetes_folder} && bash test.sh ${image_tag}"
                     }
                     if (env.BRANCH_NAME == "master") {
@@ -198,8 +199,8 @@ ${image_tag} \
                 } catch (e) {
                     currentBuild.result = 'FAILURE'
                 } finally {
-                    junit 'docker/reports/*.xml'
-                    sh "rm -rf docker/reports"
+                    junit "${reports_folder}/*.xml"
+                    sh "rm -rf ${reports_folder}"
                 }
             }
         }
