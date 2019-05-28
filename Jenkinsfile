@@ -186,7 +186,6 @@ ${image_tag} \
 | grep ${version}"
                     }
                     stage(stage_name + 'Test image') {
-                        sh "apk add bash"
                         sh "mkdir -p ${kubernetes_folder}/reports"
                         sh "cd ${kubernetes_folder} && bash test.sh ${image_tag}"
                     }
