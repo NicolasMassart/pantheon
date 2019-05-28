@@ -186,10 +186,8 @@ ${image_tag} \
 | grep ${version}"
                     }
                     stage(stage_name + 'Test image') {
-//                        sh "apk add bash"
                         sh "mkdir -p ${kubernetes_folder}/reports"
-//                        sh "cd ${kubernetes_folder} && bash test.sh ${image_tag}"
-                        sh "cd ${kubernetes_folder} && test.sh ${image_tag}"
+                        sh "cd ${kubernetes_folder} && sh test.sh ${image_tag}"
                     }
                     //TODO remove comments to have only master push to the repos
                     //if (env.BRANCH_NAME == "master") {
