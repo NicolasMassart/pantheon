@@ -158,8 +158,7 @@ try {
         }
     }, KubernetesDockerImage: {
         def stage_name = 'Kubernetes Docker image node: '
-        // TODO change this image tag to the right one once it works
-        def image_tag = 'nmassart/pantheon-kubernetes:test'
+        def image_tag = 'pegasyseng/pantheon-kubernetes:develop'
         def kubernetes_folder = 'kubernetes'
         def kubernetes_image_build_script = "${kubernetes_folder}/build_image.sh"
         def version_property_file = 'gradle.properties'
@@ -189,14 +188,13 @@ ${image_tag} \
                         sh "mkdir -p ${kubernetes_folder}/reports"
                         sh "cd ${kubernetes_folder} && bash test.sh ${image_tag}"
                     }
-                    //TODO remove comments to have only master push to the repos
-                    //if (env.BRANCH_NAME == "master") {
+                    if (env.BRANCH_NAME == "master") {
                         stage(stage_name + 'Push image') {
                             docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-pegasysengci') {
                                 docker.image(image_tag).push()
                             }
                         }
-                    //}
+                    }
                 } catch (e) {
                     currentBuild.result = 'FAILURE'
                 } finally {
