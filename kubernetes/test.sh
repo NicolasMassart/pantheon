@@ -7,7 +7,7 @@ DOCKER_IMAGE=$1
 
 i=0
 
-# Test for normal unconfigured startup
+# Test for normal startup with ports opened
 GOSS_FILES_PATH=tests/01 \
 bash tests/dgoss \
 run $DOCKER_IMAGE \
