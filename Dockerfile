@@ -1,6 +1,6 @@
 # Build image stage
 # Use openJDK 8 to build the image for multi-stage build
-FROM openjdk:8-jdk AS builder
+FROM openjdk:8-jdk-slim AS builder
 # Copy Pantheon sources, note the .dockerignore excluding the copy of
 # non necessary files for the build stage
 COPY ./ /pantheon
@@ -10,7 +10,7 @@ RUN ./gradlew installDist
 
 # Run image stage
 # Use openJDK JRE only for running pantheon
-FROM openjdk:11-jre
+FROM openjdk:11-jre-slim
 # Copy built binaries from the previous step image
 COPY --from=builder /pantheon/build/install/pantheon /opt/pantheon
 WORKDIR /opt/pantheon

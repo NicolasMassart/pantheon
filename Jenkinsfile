@@ -157,26 +157,53 @@ try {
             }
         }
     }, KubernetesDockerImage: {
-        def stage_name = "Kubernetes docker image build test node: "
+        def stage_name = 'Kubernetes Docker image node: '
+        // TODO change this image tag to the right one once it works
+        def image_tag = 'nmassart/pantheon-kubernetes:test'
+        def kubernetes_folder = 'kubernetes'
+        def kubernetes_image_build_script = "${kubernetes_folder}/build_image.sh"
+        def version_property_file = 'gradle.properties'
         node {
             checkout scm
             docker.image(build_image).inside() {
                 try {
-                    stage(stage_name) {
-                        sh 'kubernetes/build_image.sh'
+                    stage(stage_name + 'Dockerfile lint') {
+                        sh 'docker run --rm -i hadolint/hadolint < Dockerfile'
+                    }
+                    stage(stage_name + 'Build image') {
+                        sh "${kubernetes_image_build_script} '${image_tag}'"
+                    }
+                    stage(stage_name + "Test image labels") {
                         shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-                        version = sh(returnStdout: true, script: "grep -oE \"version=(.*)\" gradle.properties | cut -d= -f2").trim()
+                        version = sh(returnStdout: true, script: "grep -oE \"version=(.*)\" ${version_property_file} | cut -d= -f2").trim()
                         sh "docker image inspect \
 --format='{{index .Config.Labels \"org.label-schema.vcs-ref\"}}' \
-pegasyseng/pantheon-kubernetes:latest \
+${image_tag} \
 | grep ${shortCommit}"
                         sh "docker image inspect \
 --format='{{index .Config.Labels \"org.label-schema.version\"}}' \
-pegasyseng/pantheon-kubernetes:latest \
+${image_tag} \
 | grep ${version}"
                     }
+                    stage(stage_name + 'Test image') {
+//                        sh "apk add bash"
+                        sh "mkdir -p ${kubernetes_folder}/reports"
+//                        sh "cd ${kubernetes_folder} && bash test.sh ${image_tag}"
+                        sh "cd ${kubernetes_folder} && test.sh ${image_tag}"
+                    }
+                    //TODO remove comments to have only master push to the repos
+                    //if (env.BRANCH_NAME == "master") {
+                        stage(stage_name + 'Push image') {
+                            docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-pegasysengci') {
+                                docker.image(image_tag).push()
+                            }
+                        }
+                    //}
                 } catch (e) {
                     currentBuild.result = 'FAILURE'
+                } finally {
+                    junit 'docker/reports/*.xml'
+                    sh "rm -rf docker/reports"
                 }
             }
         }
