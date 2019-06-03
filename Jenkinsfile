@@ -196,41 +196,37 @@ try {
                 checkout scm
                 unstash 'distTarBall'
                 docker.image(build_image).inside() {
-                    try {
-                        stage(stage_name + 'Dockerfile lint') {
-                            sh "docker run --rm -i hadolint/hadolint < ${dockerfile}"
-                        }
-                        stage(stage_name + 'Build image') {
-                            sh "${kubernetes_image_build_script} '${image}'"
-                        }
-                        stage(stage_name + "Test image labels") {
-                            shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-                            version = sh(returnStdout: true, script: "grep -oE \"version=(.*)\" ${version_property_file} | cut -d= -f2").trim()
-                            sh "docker image inspect \
+                    stage(stage_name + 'Dockerfile lint') {
+                        sh "docker run --rm -i hadolint/hadolint < ${dockerfile}"
+                    }
+                    stage(stage_name + 'Build image') {
+                        sh "${kubernetes_image_build_script} '${image}'"
+                    }
+                    stage(stage_name + "Test image labels") {
+                        shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+                        version = sh(returnStdout: true, script: "grep -oE \"version=(.*)\" ${version_property_file} | cut -d= -f2").trim()
+                        sh "docker image inspect \
 --format='{{index .Config.Labels \"org.label-schema.vcs-ref\"}}' \
 ${image} \
 | grep ${shortCommit}"
-                            sh "docker image inspect \
+                        sh "docker image inspect \
 --format='{{index .Config.Labels \"org.label-schema.version\"}}' \
 ${image} \
 | grep ${version}"
-                        }
+                    }
+                    try {
                         stage(stage_name + 'Test image') {
                             sh "mkdir -p ${reports_folder}"
                             sh "cd ${kubernetes_folder} && bash test.sh ${image}"
                         }
-                        if (env.BRANCH_NAME == "master") {
-                            stage(stage_name + 'Push image') {
-                                docker.withRegistry(registry, userAccount) {
-                                    docker.image(image).push()
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        currentBuild.result = 'FAILURE'
                     } finally {
                         junit "${reports_folder}/*.xml"
                         sh "rm -rf ${reports_folder}"
+                    }
+                    stage(stage_name + 'Push image') {
+                        docker.withRegistry(registry, userAccount) {
+                            docker.image(image).push()
+                        }
                     }
                 }
             }
