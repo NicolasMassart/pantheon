@@ -156,54 +156,6 @@ try {
                 }
             }
         }
-    }, KubernetesDockerImage: {
-        def stage_name = 'Kubernetes Docker image node: '
-        def image_tag = 'pegasyseng/pantheon-kubernetes:develop'
-        def kubernetes_folder = 'kubernetes'
-        def kubernetes_image_build_script = "${kubernetes_folder}/build_image.sh"
-        def version_property_file = 'gradle.properties'
-        def reports_folder = "${kubernetes_folder}/reports"
-        node {
-            checkout scm
-            docker.image(build_image).inside() {
-                try {
-                    stage(stage_name + 'Dockerfile lint') {
-                        sh 'docker run --rm -i hadolint/hadolint < Dockerfile'
-                    }
-                    stage(stage_name + 'Build image') {
-                        sh "${kubernetes_image_build_script} '${image_tag}'"
-                    }
-                    stage(stage_name + "Test image labels") {
-                        shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-                        version = sh(returnStdout: true, script: "grep -oE \"version=(.*)\" ${version_property_file} | cut -d= -f2").trim()
-                        sh "docker image inspect \
---format='{{index .Config.Labels \"org.label-schema.vcs-ref\"}}' \
-${image_tag} \
-| grep ${shortCommit}"
-                        sh "docker image inspect \
---format='{{index .Config.Labels \"org.label-schema.version\"}}' \
-${image_tag} \
-| grep ${version}"
-                    }
-                    stage(stage_name + 'Test image') {
-                        sh "mkdir -p ${reports_folder}"
-                        sh "cd ${kubernetes_folder} && bash test.sh ${image_tag}"
-                    }
-                    if (env.BRANCH_NAME == "master") {
-                        stage(stage_name + 'Push image') {
-                            docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-pegasysengci') {
-                                docker.image(image_tag).push()
-                            }
-                        }
-                    }
-                } catch (e) {
-                    currentBuild.result = 'FAILURE'
-                } finally {
-                    junit "${reports_folder}/*.xml"
-                    sh "rm -rf ${reports_folder}"
-                }
-            }
-        }
     }, DocTests: {
         def stage_name = "Documentation tests node: "
         node {
@@ -222,29 +174,93 @@ ${image_tag} \
             }
         }
     }
-    if (env.BRANCH_NAME == "master") {
-        node {
-            checkout scm
-            unstash 'distTarBall'
-            docker.image(docker_image_dind).withRun('--privileged') { d ->
-                docker.image(docker_image).inside("-e DOCKER_HOST=tcp://docker:2375 --link ${d.id}:docker") {
-                    stage('build image') {
-                        sh "cd docker && cp ../build/distributions/pantheon-*.tar.gz ."
-                        pantheon = docker.build("pegasyseng/pantheon:develop", "docker")
-                    }
+
+// TODO Change after testing pipeline
+//    if (env.BRANCH_NAME == "master") {
+    if (env.BRANCH_NAME != "master") {
+        def registry = 'https://registry.hub.docker.com'
+        def userAccount = 'dockerhub-pegasysengci'
+// TODO Change after testing pipeline
+//        def imageRepos = 'pegasyseng'
+        def imageRepos = 'nmassart'
+        def imageTag = 'develop'
+        parallel KubernetesDockerImage: {
+            def stage_name = 'Kubernetes Docker image node: '
+            def image = imageRepos + '/pantheon-kubernetes:' + imageTag
+            def kubernetes_folder = 'kubernetes'
+            def kubernetes_image_build_script = kubernetes_folder + '/build_image.sh'
+            def version_property_file = 'gradle.properties'
+            def reports_folder = kubernetes_folder + '/reports'
+            def dockerfile = kubernetes_folder + '/Dockerfile'
+            node {
+                checkout scm
+                unstash 'distTarBall'
+                docker.image(build_image).inside() {
                     try {
-                        stage('test image') {
-                            sh "apk add bash"
-                            sh "mkdir -p docker/reports"
-                            sh "cd docker && bash test.sh pegasyseng/pantheon:develop"
+                        stage(stage_name + 'Dockerfile lint') {
+                            sh "docker run --rm -i hadolint/hadolint < ${dockerfile}"
                         }
+                        stage(stage_name + 'Build image') {
+                            sh "${kubernetes_image_build_script} '${image}'"
+                        }
+                        stage(stage_name + "Test image labels") {
+                            shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+                            version = sh(returnStdout: true, script: "grep -oE \"version=(.*)\" ${version_property_file} | cut -d= -f2").trim()
+                            sh "docker image inspect \
+--format='{{index .Config.Labels \"org.label-schema.vcs-ref\"}}' \
+${image} \
+| grep ${shortCommit}"
+                            sh "docker image inspect \
+--format='{{index .Config.Labels \"org.label-schema.version\"}}' \
+${image} \
+| grep ${version}"
+                        }
+                        stage(stage_name + 'Test image') {
+                            sh "mkdir -p ${reports_folder}"
+                            sh "cd ${kubernetes_folder} && bash test.sh ${image}"
+                        }
+                        if (env.BRANCH_NAME == "master") {
+                            stage(stage_name + 'Push image') {
+                                docker.withRegistry(registry, userAccount) {
+                                    docker.image(image).push()
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        currentBuild.result = 'FAILURE'
                     } finally {
-                        junit 'docker/reports/*.xml'
-                        sh "rm -rf docker/reports"
+                        junit "${reports_folder}/*.xml"
+                        sh "rm -rf ${reports_folder}"
                     }
-                    stage('push image') {
-                        docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-pegasysengci') {
-                            pantheon.push()
+                }
+            }
+        },
+        DockerImage: {
+            def stage_name = 'Docker image node: '
+            def image = imageRepos + '/pantheon:' + imageTag
+            node {
+                checkout scm
+                unstash 'distTarBall'
+                docker.image(docker_image_dind).withRun('--privileged') { d ->
+                    docker.image(docker_image).inside("-e DOCKER_HOST=tcp://docker:2375 --link ${d.id}:docker") {
+                        stage(stage_name + 'build image') {
+                            sh "cd docker && cp ../build/distributions/pantheon-*.tar.gz ."
+                            pantheon = docker.build(image, "docker")
+                        }
+                        try {
+                            stage('test image') {
+                                sh "apk add bash"
+                                sh "mkdir -p docker/reports"
+                                sh "cd docker && bash test.sh ${image}"
+                            }
+                        } finally {
+                            junit 'docker/reports/*.xml'
+                            sh "rm -rf docker/reports"
+                        }
+                        stage(stage_name + 'push image') {
+                            docker.withRegistry(registry, userAccount) {
+                                pantheon.push()
+                            }
                         }
                     }
                 }
