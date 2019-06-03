@@ -175,14 +175,10 @@ try {
         }
     }
 
-// TODO Change after testing pipeline
-//    if (env.BRANCH_NAME == "master") {
-    if (env.BRANCH_NAME != "master") {
+    if (env.BRANCH_NAME == "master") {
         def registry = 'https://registry.hub.docker.com'
         def userAccount = 'dockerhub-pegasysengci'
-// TODO Change after testing pipeline
-//        def imageRepos = 'pegasyseng'
-        def imageRepos = 'nmassart'
+        def imageRepos = 'pegasyseng'
         def imageTag = 'develop'
         parallel KubernetesDockerImage: {
             def stage_name = 'Kubernetes Docker image node: '
