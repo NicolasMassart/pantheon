@@ -4,7 +4,7 @@ description: Alethio EthStats Lite Network Monitor
 # Alethio EthStats Lite Network Monitor
 
 Use the [Alethio EthStats Lite Network Monitor](https://github.com/Alethio?utf8=%E2%9C%93&q=ethstats&type=&language=javascript)
-to have a live view of private networks health by displaying real time and historical statistics 
+to have a live view of private network health by displaying real time and historical statistics 
 about the network and nodes.
 
 The lite version supports in-memory persistence or using Redis to persist a fixed number of blocks
@@ -16,7 +16,7 @@ You can also use a full online version of EthStats Network Monitor for the [Ethe
     The Alethio EthStats Lite Network Monitor is an [Alethio product](https://company.aleth.io/developers).
 
 !!! tip
-    Static local ports 80 and 3000 are used in the example of [running the Lite Network Monitor 
+    Static local ports 80 and 3000 are used in the example [running the Lite Network Monitor 
     for a Pantheon Node](#running-lite-network-monitor-for-a-pantheon-node).  
 
 ## Statistics
@@ -51,8 +51,8 @@ The client extracts data from the node and sends it to the server
 [Docker](https://docs.docker.com/install/)
 
 !!! tip
-    The Network Monitor has a number of dependencies. Using Docker is the easiest way to demonstrate
-    using the Network Monitor with Pantheon.
+    The Network Monitor has a number of dependencies. Using Docker is the easiest way to
+    use the Network Monitor with Pantheon.
     
     The [EthStats CLI](https://github.com/Alethio/ethstats-cli),
     [EthStats Network Server](https://github.com/Alethio/ethstats-network-server), and [EthStats Network
@@ -81,16 +81,14 @@ Start the server using in-memory persistence:
     cd ethstats-network-server/docker/lite-mode/memory-persistence
     ```
 
-1. You have to modify the `docker-compose.yml` file to match you pantheon network:
-
-    As default is set to use **mainnet** with id 1, you have to change to the developement
-    network values that you will use in the next step by setting Pantheon network to `dev`. 
-
-    Change the `docker-compose.yml` with the following values :
+1. Update the `docker-compose.yml` file to your Pantheon [network ID](../Configuring-Pantheon/NetworkID-And-ChainID.md):
+    
     ```yaml
-          - NETWORK_ID=2018
-          - NETWORK_NAME=mynetwork
+     - NETWORK_ID=2018
+     - NETWORK_NAME=mynetwork
     ```
+    
+    In this example we are using the `dev` Pantheon network with a network ID of `2018`.      
     
 1. Start the server using Docker compose: 
 
@@ -99,7 +97,7 @@ Start the server using in-memory persistence:
     ```
    
 !!! tip
-    A `docker-compose` file is also provided in the `ethstats-network-server/docker/lite-mode/redis-persistence`
+    A `docker-compose` file is provided in the `ethstats-network-server/docker/lite-mode/redis-persistence`
     directory to run the server using Redis to persist a fixed number of blocks (default is 3000).
 
 ### 2. Pantheon 
@@ -133,17 +131,17 @@ To display the Network Monitor dashboard, open [http://localhost](http://localho
 
 ![Alethio EthStats Light Network Monitor Dashboard](ethstats.png)
 
-??? note "Note about the default HTTP port"
-    We propose to use default HTTP port (80) to run the EthStats Lite Network Monitor in this 
-    example as you may already run the [Lite Block Explorer](Lite-Block-Explorer.md) on port 8080.
-    You can then run both at the same time if you want.
-    Feel free to change this port depending on your setup.
-    The configuration can be changed in `docker-compose.yml` where you can find the lines :
+!!! note "Default HTTP port"
+    We are using the default HTTP port (80) to run the Lite Network Monitor. The [Lite Block Explorer](Lite-Block-Explorer.md) 
+    example uses port 8080. You can then run both at the same time.
+ 
+    To change the port, update the `docker-compose.yml` file:
     ```yaml
         ports:
           - 127.0.0.1:80:80
     ```
-    Change the first 80 to whatever suits your setup as 8081 for instance :
+    
+    Update the first 80 to the required port:
     ```yaml
         ports:
           - 127.0.0.1:8081:80
@@ -167,5 +165,5 @@ When you've finished running the Network Monitor:
     docker stop ethstats-client
     ```
     
-    !!! note
-        Client container will be automatically removed because we ran it with the `--rm` option.
+    !!! tip
+        The client container is automatically removed because we used the `--rm` option.

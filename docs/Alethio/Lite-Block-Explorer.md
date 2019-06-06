@@ -15,12 +15,11 @@ data is required.
 
 ## Prerequisites
 
-[Docker](https://docs.docker.com/install/) of [Node.js](https://nodejs.org/)
+[Docker](https://docs.docker.com/install/) or [Node.js](https://nodejs.org/)
 
 !!! tip
-    The Ethereum Lite Explorer has a number of dependencies including Node.js.
-    If you don't have Node.js installed already but have Docker, using Docker is the easiest way to 
-    demonstrate using the Ethereum Lite Explorer with Pantheon.
+    Using Docker is the easiest way to get started using the Ethereum Lite Explorer with Pantheon if you 
+    do not have Node.js installed.
 
 ## Run Using Docker
 
@@ -46,10 +45,10 @@ To run the Ethereum Lite Explorer using the Docker image:
 
     ![Ethereum Lite Explorer](explorer.png)
 
-    ??? note "Note about the default HTTP port"
-        We propose to use port 8080 to run the Ethereum Lite Explorer in this example as you may 
-        already run the [Lite Network Monitor](Lite-Network-Monitor.md) on port 80. You can then run 
-        both at the same time if you want. Feel free to change this port depending on your setup.
+    !!! note "Default HTTP port"
+        We are using port 8080 to run the Ethereum Lite Explorer so
+        the [Lite Network Monitor](Lite-Network-Monitor.md) can use port 80. You can then run 
+        both at the same time. 
 
 ## Install and Run with Node.js
 
@@ -99,7 +98,7 @@ To run the Ethereum Lite Explorer using the Docker image:
     npm run start
     ```  
    
-1. A browser windows should open displaying the Ethereum Lite Explorer (http://localhost:3000/)
+1. A browser window displays the Ethereum Lite Explorer (http://localhost:3000/).
    
 ## Lite Block Explorer Documentation 
 
