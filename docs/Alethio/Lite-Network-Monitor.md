@@ -1,25 +1,27 @@
-description: Lite Network Health Monitor
+description: Alethio EthStats Lite Network Monitor
 <!--- END of page meta data -->
 
-# Lite Network Health Monitor
+# Alethio EthStats Lite Network Monitor
 
-Use the EthStats Lite Network Health Monitor to monitor the health of private networks by displaying real time and 
-historical statistics about the network nodes.
+Use the [Alethio EthStats Lite Network Monitor](https://github.com/Alethio?utf8=%E2%9C%93&q=ethstats&type=&language=javascript)
+to have a live view of private networks health by displaying real time and historical statistics 
+about the network and nodes.
 
-The lite version supports in-memory persistence or using Redis to persist a fixed number of blocks (by default,
-3000). 
+The lite version supports in-memory persistence or using Redis to persist a fixed number of blocks
+(by default, 3000). 
 
-View the Network Health Monitor for the [Ethereum MainNet](https://net.ethstats.io).
+You can also use a full online version of EthStats Network Monitor for the [Ethereum MainNet](https://ethstats.io).
 
 !!! note 
-    The EthStats Lite Block Explorer is an [Alethio product](https://aleth.io/).
-    
-    Static local ports 80 and 3000 are used in the example of [running the Lite Network Health Monitor 
-    for a Pantheon Node](#running-lite-network-health-monitor-for-a-pantheon-node).  
+    The Alethio EthStats Lite Network Monitor is an [Alethio product](https://company.aleth.io/developers).
+
+!!! tip
+    Static local ports 80 and 3000 are used in the example of [running the Lite Network Monitor 
+    for a Pantheon Node](#running-lite-network-monitor-for-a-pantheon-node).  
 
 ## Statistics
 
-Statistics displayed by the Network Health Monitor include: 
+Statistics displayed by the Network Monitor include: 
 
 * Nodes in the network. Metrics for nodes include:
     - Information about the last received block such as block number, 
@@ -34,7 +36,7 @@ Block Propagation Histogram, and Top Miners
  
 ## Components 
 
-The Network Health Monitor consists of: 
+The Network Monitor consists of: 
 
 * [Server](https://github.com/Alethio/ethstats-network-server). Consumes node data received from the 
 client. 
@@ -49,16 +51,19 @@ The client extracts data from the node and sends it to the server
 [Docker](https://docs.docker.com/install/)
 
 !!! tip
-    The Network Health Monitor has a number of dependencies. Using Docker is the easiest way to demonstrate
-    the using the Network Health Monitor with Pantheon. The [EthStats CLI](https://github.com/Alethio/ethstats-cli),
+    The Network Monitor has a number of dependencies. Using Docker is the easiest way to demonstrate
+    using the Network Monitor with Pantheon.
+    
+    The [EthStats CLI](https://github.com/Alethio/ethstats-cli),
     [EthStats Network Server](https://github.com/Alethio/ethstats-network-server), and [EthStats Network
-    Dashboard](https://github.com/Alethio/ethstats-network-dashboard) documentation describes how to install 
-    the Network Heath Explorer tools. 
+    Dashboard](https://github.com/Alethio/ethstats-network-dashboard) documentation describes how to 
+    install the Network Monitor tools. 
 
-## Running Lite Network Health Monitor for a Pantheon Node
+## Running Lite Network Monitor for a Pantheon Node
 
-This  example describes how to run the Lite Network Heath Monitor for a single Pantheon node. To run the 
-Lite Network Health Monitor for a network of nodes, a [client](#3-client) must be started for each node. 
+!!! important
+    This  example describes how to run the Lite Network Monitor for a single Pantheon node. To run the 
+    Lite Network Monitor for a network of nodes, a [client](#3-client) must be started for each node. 
 
 ### 1. Server
 
@@ -70,13 +75,24 @@ Start the server using in-memory persistence:
     git clone https://github.com/Alethio/ethstats-network-server.git
     ```
 
-2. Change into the `/ethstats-network-server/docker/lite-mode/memory-persistence` directory:
+1. Change into the `/ethstats-network-server/docker/lite-mode/memory-persistence` directory:
    
     ```bash
     cd ethstats-network-server/docker/lite-mode/memory-persistence
     ```
 
-3. Use the provided `docker-compose` file to start the server: 
+1. You have to modify the `docker-compose.yml` file to match you pantheon network:
+
+    As default is set to use **mainnet** with id 1, you have to change to the developement
+    network values that you will use in the next step by setting Pantheon network to `dev`. 
+
+    Change the `docker-compose.yml` with the following values :
+    ```yaml
+          - NETWORK_ID=2018
+          - NETWORK_NAME=mynetwork
+    ```
+    
+1. Start the server using Docker compose: 
 
     ```bash
     docker-compose up -d
@@ -101,7 +117,7 @@ Where `<pantheondata-path>` is the volume to which the node data is saved.
 Start the client for the Pantheon node:  
 
 ```bash
-docker run -d --rm --net host alethio/ethstats-cli --register --account-email <email> --node-name <node_name> --server-url http://localhost:3000 --client-url ws://127.0.0.1:8546
+docker run -d --rm --name ethstats-client --net host alethio/ethstats-cli --register --account-email <email> --node-name <node_name> --server-url http://localhost:3000 --client-url ws://127.0.0.1:8546
 ```
 
 Where: 
@@ -113,11 +129,13 @@ Registering the node is only required the first time the client is started for t
 
 ### 4. Dashboard 
 
-To display the Network Health Monitor dashboard, open [`localhost`](http://localhost) in your browser. 
+To display the Network Monitor dashboard, open [`localhost`](http://localhost) in your browser. 
+
+![Alethio EthStats Light Network Monitor Dashboard](ethstats.png)
 
 ### Stopping and Cleaning Up Resources
 
-When you've finished running the Network Health Monitor:
+When you've finished running the Network Monitor:
 
 1. Stop Pantheon using ++ctrl+c++.  
 
@@ -126,15 +144,12 @@ When you've finished running the Network Health Monitor:
     ```bash
     docker-compose down -v
     ```  
-   
-1. Obtain client container ID: 
-
-    ```bash
-    docker ps 
-    ```
   
-1. Stop the client and remove container: 
+1. Stop the client: 
    
     ```bash
-    docker rm -f <id>
+    docker stop ethstats-client
     ```
+    
+    !!! note
+        Client container will be automatically removed because we ran it with the `--rm` option.
