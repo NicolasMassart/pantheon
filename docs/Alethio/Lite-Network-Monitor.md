@@ -129,9 +129,25 @@ Registering the node is only required the first time the client is started for t
 
 ### 4. Dashboard 
 
-To display the Network Monitor dashboard, open [`localhost`](http://localhost) in your browser. 
+To display the Network Monitor dashboard, open [http://localhost](http://localhost) in your browser. 
 
 ![Alethio EthStats Light Network Monitor Dashboard](ethstats.png)
+
+??? note "Note about the default HTTP port"
+    We propose to use default HTTP port (80) to run the EthStats Lite Network Monitor in this 
+    example as you may already run the [Lite Block Explorer](Lite-Block-Explorer.md) on port 8080.
+    You can then run both at the same time if you want.
+    Feel free to change this port depending on your setup.
+    The configuration can be changed in `docker-compose.yml` where you can find the lines :
+    ```yaml
+        ports:
+          - 127.0.0.1:80:80
+    ```
+    Change the first 80 to whatever suits your setup as 8081 for instance :
+    ```yaml
+        ports:
+          - 127.0.0.1:8081:80
+    ```
 
 ### Stopping and Cleaning Up Resources
 

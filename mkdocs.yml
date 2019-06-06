@@ -121,8 +121,8 @@ nav:
     - Monitoring Pantheon:
         - Alethio:
           - Overview: Alethio/Overview.md
-          - Lite Block Explorer: Alethio/Lite-Block-Explorer.md
-          - Lite Network Health Monitor: Alethio/Lite-Network-Monitor.md
+          - Ethereum Lite Explorer: Alethio/Lite-Block-Explorer.md
+          - EthStats Lite Network Monitor: Alethio/Lite-Network-Monitor.md
     - Troubleshooting:
         - Troubleshooting: Troubleshooting/Troubleshooting.md
     - Reference:
