@@ -88,8 +88,7 @@ Start the EthStats Lite server using in-memory persistence:
      - NETWORK_NAME=mynetwork
     ```
     
-    !!! note
-        In this example we are using the `dev` Pantheon network with a network ID of `2018`.
+    In this example we are using the `dev` Pantheon network with a network ID of `2018`.
     
 1. Start the server using Docker compose: 
 
