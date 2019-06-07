@@ -3,21 +3,21 @@ description: Alethio EthStats Lite Network Monitor
 
 # Alethio EthStats Lite Network Monitor
 
-Use the [Alethio EthStats Lite Network Monitor](https://github.com/Alethio?utf8=%E2%9C%93&q=ethstats&type=&language=javascript)
+Use [EthStats Lite](https://github.com/Alethio?utf8=%E2%9C%93&q=ethstats&type=&language=javascript)
 to have a live view of private network health by displaying real time and historical statistics 
 about the network and nodes.
 
-The lite version supports in-memory persistence or using Redis to persist a fixed number of blocks
+EthStats Lite supports in-memory persistence or using Redis to persist a fixed number of blocks
 (by default, 3000). 
 
-You can also use a full online version of EthStats Network Monitor for the [Ethereum MainNet](https://ethstats.io).
+You can also use a full online version of EthStats for the [Ethereum MainNet](https://ethstats.io).
 
 !!! note 
-    The Alethio EthStats Lite Network Monitor is an [Alethio product](https://company.aleth.io/developers).
+    The EthStats Lite is an [Alethio product](https://company.aleth.io/developers).
 
 !!! tip
-    Static local ports 80 and 3000 are used in the example [running the Lite Network Monitor 
-    for a Pantheon Node](#running-lite-network-monitor-for-a-pantheon-node).  
+    Static local ports 80 and 3000 are used in the example [running EthStats Lite 
+    for a Pantheon Node](#running-ethstats-lite-for-a-pantheon-node).  
 
 ## Statistics
 
@@ -36,7 +36,7 @@ Block Propagation Histogram, and Top Miners
  
 ## Components 
 
-The Network Monitor consists of: 
+EthStats Lite consists of: 
 
 * [Server](https://github.com/Alethio/ethstats-network-server). Consumes node data received from the 
 client. 
@@ -51,23 +51,23 @@ The client extracts data from the node and sends it to the server
 [Docker](https://docs.docker.com/install/)
 
 !!! tip
-    The Network Monitor has a number of dependencies. Using Docker is the easiest way to
+    EthStats Lite has a number of dependencies. Using Docker is the easiest way to
     use the Network Monitor with Pantheon.
     
     The [EthStats CLI](https://github.com/Alethio/ethstats-cli),
     [EthStats Network Server](https://github.com/Alethio/ethstats-network-server), and [EthStats Network
     Dashboard](https://github.com/Alethio/ethstats-network-dashboard) documentation describes how to 
-    install the Network Monitor tools. 
+    install EthStats Lite tools. 
 
-## Running Lite Network Monitor for a Pantheon Node
+## Running EthStats Lite for a Pantheon Node
 
 !!! important
-    This  example describes how to run the Lite Network Monitor for a single Pantheon node. To run the 
-    Lite Network Monitor for a network of nodes, a [client](#3-client) must be started for each node. 
+    This example describes how to run EthStats Lite for a single Pantheon node.
+    To run EthStats Lite for a network of nodes, a [client](#3-client) must be started for each node. 
 
 ### 1. Server
 
-Start the server using in-memory persistence: 
+Start the EthStats Lite server using in-memory persistence: 
 
 1. Clone the server repository: 
 
@@ -81,14 +81,17 @@ Start the server using in-memory persistence:
     cd ethstats-network-server/docker/lite-mode/memory-persistence
     ```
 
-1. Update the `docker-compose.yml` file to your Pantheon [network ID](../Configuring-Pantheon/NetworkID-And-ChainID.md):
+1. Update the `docker-compose.yml` file to your Pantheon [chain ID](../Configuring-Pantheon/NetworkID-And-ChainID.md):
     
     ```yaml
      - NETWORK_ID=2018
      - NETWORK_NAME=mynetwork
     ```
     
-    In this example we are using the `dev` Pantheon network with a network ID of `2018`.      
+    !!! warning
+        In this example we are using the `dev` Pantheon network with a chain ID of `2018`.
+        Variable name here is `NETWORK_ID` as many network have similar network and chain ids 
+        but the value has to be the Pantheon node Chain ID here.
     
 1. Start the server using Docker compose: 
 
@@ -102,7 +105,7 @@ Start the server using in-memory persistence:
 
 ### 2. Pantheon 
 
-Start Pantheon in development mode with Websockets enabled:
+Start Pantheon in development mode with WebSockets enabled:
 
 ```bash
 docker run --rm -p 8546:8546 pegasyseng/pantheon:latest --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --rpc-ws-enabled --network=dev
@@ -127,12 +130,12 @@ Registering the node is only required the first time the client is started for t
 
 ### 4. Dashboard 
 
-To display the Network Monitor dashboard, open [http://localhost](http://localhost) in your browser. 
+To display EthStats Lite dashboard, open [http://localhost](http://localhost) in your browser. 
 
-![Alethio EthStats Light Network Monitor Dashboard](ethstats.png)
+![Alethio EthStats Lite Dashboard](ethstats.png)
 
 !!! note "Default HTTP port"
-    We are using the default HTTP port (80) to run the Lite Network Monitor. The [Lite Block Explorer](Lite-Block-Explorer.md) 
+    We are using the default HTTP port (80) to run EthStats Lite. The [Lite Block Explorer](Lite-Block-Explorer.md) 
     example uses port 8080. You can then run both at the same time.
  
     To change the port, update the `docker-compose.yml` file:
@@ -149,17 +152,17 @@ To display the Network Monitor dashboard, open [http://localhost](http://localho
 
 ### Stopping and Cleaning Up Resources
 
-When you've finished running the Network Monitor:
+When you've finished running EthStats Lite:
 
 1. Stop Pantheon using ++ctrl+c++.  
 
-1. Stop the server and remove containers and volumes: 
+1. Stop EthStats Lite server and remove containers and volumes: 
 
     ```bash
     docker-compose down -v
     ```  
   
-1. Stop the client: 
+1. Stop EthStats Lite client: 
    
     ```bash
     docker stop ethstats-client
