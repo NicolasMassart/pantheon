@@ -1,7 +1,7 @@
-description: Alethio EthStats Lite Network Monitor
+description: Alethio EthStats Lite network monitor
 <!--- END of page meta data -->
 
-# Alethio EthStats Lite Network Monitor
+# Alethio EthStats Lite (network monitor)
 
 Use [EthStats Lite](https://github.com/Alethio?utf8=%E2%9C%93&q=ethstats&type=&language=javascript)
 to have a live view of private network health by displaying real time and historical statistics 
@@ -21,7 +21,7 @@ You can also use a full online version of EthStats for the [Ethereum MainNet](ht
 
 ## Statistics
 
-Statistics displayed by the Network Monitor include: 
+Statistics displayed by EthStats Lite include: 
 
 * Nodes in the network. Metrics for nodes include:
     - Information about the last received block such as block number, 
@@ -52,7 +52,7 @@ The client extracts data from the node and sends it to the server
 
 !!! tip
     EthStats Lite has a number of dependencies. Using Docker is the easiest way to
-    use the Network Monitor with Pantheon.
+    use EthStats Lite with Pantheon.
     
     The [EthStats CLI](https://github.com/Alethio/ethstats-cli),
     [EthStats Network Server](https://github.com/Alethio/ethstats-network-server), and [EthStats Network
