@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright 2018 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,9 +10,23 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.jsonrpc.health;
 
-@FunctionalInterface
-public interface AccountFilter {
-  boolean permitted(String account);
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class LivenessService extends HealthService {
+  private static final Logger LOG = LogManager.getLogger();
+
+  public LivenessService() {
+    super(buildHeathCheck());
+  }
+
+  private static HealthCheck buildHeathCheck() {
+    return () -> {
+      LOG.debug("Invoking liveness service.");
+
+      return true;
+    };
+  }
 }
