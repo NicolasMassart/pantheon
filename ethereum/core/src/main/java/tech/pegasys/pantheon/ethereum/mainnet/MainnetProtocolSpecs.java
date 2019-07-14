@@ -16,6 +16,7 @@ import static tech.pegasys.pantheon.ethereum.vm.MessageFrame.DEFAULT_MAX_STACK_S
 
 import tech.pegasys.pantheon.ethereum.MainnetBlockValidator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.MutableAccount;
@@ -25,11 +26,13 @@ import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldState;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
+import tech.pegasys.pantheon.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -46,6 +49,8 @@ public abstract class MainnetProtocolSpecs {
   public static final int FRONTIER_CONTRACT_SIZE_LIMIT = Integer.MAX_VALUE;
 
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
+
+  public static final int ISTANBUL_ACCOUNT_VERSION = 1;
 
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
@@ -76,7 +81,11 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator, evm, false, contractSizeLimit, 0))
+                    gasCalculator,
+                    evm,
+                    false,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+                    0))
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(gasCalculator, false, Optional.empty()))
@@ -91,7 +100,8 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    stackSizeLimit))
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
         .privateTransactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -103,7 +113,8 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    stackSizeLimit))
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::create)
         .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator::createOmmerValidator)
@@ -128,7 +139,11 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator, evm, true, contractSizeLimit, 0))
+                    gasCalculator,
+                    evm,
+                    true,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+                    0))
         .transactionValidatorBuilder(
             gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, Optional.empty()))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
@@ -189,7 +204,7 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator,
                     evm,
                     true,
-                    contractSizeLimit,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
@@ -205,7 +220,8 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
-                    stackSizeLimit))
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
         .privateTransactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -217,19 +233,24 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    stackSizeLimit))
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
         .name("SpuriousDragon");
   }
 
   public static ProtocolSpecBuilder<Void> byzantiumDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
     return spuriousDragonDefinition(chainId, contractSizeLimit, configStackSizeLimit)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
-        .transactionReceiptFactory(MainnetProtocolSpecs::byzantiumTransactionReceiptFactory)
+        .transactionReceiptFactory(
+            enableRevertReason
+                ? MainnetProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
+                : MainnetProtocolSpecs::byzantiumTransactionReceiptFactory)
         .blockReward(BYZANTIUM_BLOCK_REWARD)
         .transactionReceiptType(TransactionReceiptType.STATUS)
         .name("Byzantium");
@@ -238,8 +259,9 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder<Void> constantinopleDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
-    return byzantiumDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    return byzantiumDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::constantinople)
@@ -250,20 +272,84 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder<Void> constantinopleFixDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
-    return constantinopleDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    return constantinopleDefinition(
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
         .gasCalculator(ConstantinopleFixGasCalculator::new)
         .name("ConstantinopleFix");
   }
 
+  public static ProtocolSpecBuilder<Void> istanbulDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    final int stackSizeLimit = configStackSizeLimit.orElse(DEFAULT_MAX_STACK_SIZE);
+    return constantinopleFixDefinition(
+            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .evmBuilder(MainnetEvmRegistries::istanbul)
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    stackSizeLimit,
+                    ISTANBUL_ACCOUNT_VERSION))
+        .privateTransactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new PrivateTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    false,
+                    stackSizeLimit,
+                    ISTANBUL_ACCOUNT_VERSION))
+        .contractCreationProcessorBuilder(
+            (gasCalculator, evm) ->
+                new MainnetContractCreationProcessor(
+                    gasCalculator,
+                    evm,
+                    true,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES,
+                    ISTANBUL_ACCOUNT_VERSION))
+        .name("Istanbul");
+  }
+
   private static TransactionReceipt frontierTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
-    return new TransactionReceipt(worldState.rootHash(), gasUsed, result.getLogs());
+    return new TransactionReceipt(
+        worldState.rootHash(),
+        gasUsed,
+        result.getLogs(),
+        Optional.empty()); // No revert reason in frontier
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
-    return new TransactionReceipt(result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs());
+    return new TransactionReceipt(
+        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
+  }
+
+  private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
+      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+    return new TransactionReceipt(
+        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
   }
 
   private static class DaoBlockProcessor implements BlockProcessor {

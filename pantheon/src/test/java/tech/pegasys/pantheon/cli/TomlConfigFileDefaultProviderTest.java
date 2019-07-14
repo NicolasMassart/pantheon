@@ -15,6 +15,9 @@ package tech.pegasys.pantheon.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.cli.util.TomlConfigFileDefaultProvider;
+import tech.pegasys.pantheon.ethereum.core.Wei;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -91,6 +94,8 @@ public class TomlConfigFileDefaultProviderTest {
       fileWriter.newLine();
       fileWriter.write("an-int-value-option=123");
       fileWriter.newLine();
+      fileWriter.write("a-wei-value-option=1");
+      fileWriter.newLine();
       fileWriter.write("a-string-value-option='my value'");
       fileWriter.flush();
 
@@ -116,6 +121,11 @@ public class TomlConfigFileDefaultProviderTest {
               providerUnderTest.defaultValue(
                   OptionSpec.builder("an-int-value-option").type(Integer.class).build()))
           .isEqualTo("123");
+
+      assertThat(
+              providerUnderTest.defaultValue(
+                  OptionSpec.builder("a-wei-value-option").type(Wei.class).build()))
+          .isEqualTo("1");
 
       assertThat(
               providerUnderTest.defaultValue(
