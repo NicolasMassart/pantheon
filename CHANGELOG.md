@@ -13,7 +13,11 @@ for information on options that were previously automatically added to the Panth
 
 ### Additions and Improvements
 
-- Removed the release plugin in favour of the new process with branches [#1843](https://github.com/PegaSysEng/pantheon/pull/1843)
+- Removed the release plugin in favour of the new process with branches
+[#1841](https://github.com/PegaSysEng/pantheon/pull/1841)
+[#1843](https://github.com/PegaSysEng/pantheon/pull/1843)
+[#1848](https://github.com/PegaSysEng/pantheon/pull/1848)
+[#1856](https://github.com/PegaSysEng/pantheon/pull/1856)
 - Updated Görli bootnodes [#1842](https://github.com/PegaSysEng/pantheon/pull/1842)
 - Removed unnecessary test dependency [#1839](https://github.com/PegaSysEng/pantheon/pull/1839)
 - Added warning when comments are used in genesis file [#1838](https://github.com/PegaSysEng/pantheon/pull/1838)
@@ -125,6 +129,13 @@ for information on options that were previously automatically added to the Panth
   [#1827](https://github.com/PegaSysEng/pantheon/pull/1827)
   [#1767](https://github.com/PegaSysEng/pantheon/pull/1767) (thanks to [helderjnpinto](https://github.com/helderjnpinto))
   - Moved the docs to a [new doc repos](https://github.com/PegaSysEng/doc.pantheon) [#1822](https://github.com/PegaSysEng/pantheon/pull/1822)
+  - Explicitly configure some maven artifactIds [#1853](https://github.com/PegaSysEng/pantheon/pull/1853)
+  - Update export subcommand to export blocks in rlp format [#1852](https://github.com/PegaSysEng/pantheon/pull/1852)
+  - Implement `eth_getproof` JSON RPC API [#1824](https://github.com/PegaSysEng/pantheon/pull/1824)
+  - [PAN-2818] Database versioning and enable multi-column database [#1830](https://github.com/PegaSysEng/pantheon/pull/1830)
+  - Disable Istanbul block [#1849](https://github.com/PegaSysEng/pantheon/pull/)
+  - Disable smoke tests on windows [#1847](https://github.com/PegaSysEng/pantheon/pull/1847)
+  - Add read-only blockchain factory method [#1845](https://github.com/PegaSysEng/pantheon/pull/)
 
 ## 1.2 
 
