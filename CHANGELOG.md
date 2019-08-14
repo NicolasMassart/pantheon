@@ -17,7 +17,7 @@ for information on options that were previously automatically added to the Panth
 [#1841](https://github.com/PegaSysEng/pantheon/pull/1841)
 [#1843](https://github.com/PegaSysEng/pantheon/pull/1843)
 [#1848](https://github.com/PegaSysEng/pantheon/pull/1848)
-[#1856](https://github.com/PegaSysEng/pantheon/pull/1856)
+[#1855](https://github.com/PegaSysEng/pantheon/pull/1855)
 - Updated Görli bootnodes [#1842](https://github.com/PegaSysEng/pantheon/pull/1842)
 - Removed unnecessary test dependency [#1839](https://github.com/PegaSysEng/pantheon/pull/1839)
 - Added warning when comments are used in genesis file [#1838](https://github.com/PegaSysEng/pantheon/pull/1838)
