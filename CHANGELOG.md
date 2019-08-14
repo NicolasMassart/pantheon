@@ -129,13 +129,13 @@ for information on options that were previously automatically added to the Panth
   [#1827](https://github.com/PegaSysEng/pantheon/pull/1827)
   [#1767](https://github.com/PegaSysEng/pantheon/pull/1767) (thanks to [helderjnpinto](https://github.com/helderjnpinto))
   - Moved the docs to a [new doc repos](https://github.com/PegaSysEng/doc.pantheon) [#1822](https://github.com/PegaSysEng/pantheon/pull/1822)
-  - Explicitly configure some maven artifactIds [#1853](https://github.com/PegaSysEng/pantheon/pull/1853)
-  - Update export subcommand to export blocks in rlp format [#1852](https://github.com/PegaSysEng/pantheon/pull/1852)
-  - Implement `eth_getproof` JSON RPC API [#1824](https://github.com/PegaSysEng/pantheon/pull/1824)
-  - [PAN-2818] Database versioning and enable multi-column database [#1830](https://github.com/PegaSysEng/pantheon/pull/1830)
-  - Disable Istanbul block [#1849](https://github.com/PegaSysEng/pantheon/pull/)
-  - Disable smoke tests on windows [#1847](https://github.com/PegaSysEng/pantheon/pull/1847)
-  - Add read-only blockchain factory method [#1845](https://github.com/PegaSysEng/pantheon/pull/)
+- Explicitly configure some maven artifactIds [#1853](https://github.com/PegaSysEng/pantheon/pull/1853)
+- Update export subcommand to export blocks in rlp format [#1852](https://github.com/PegaSysEng/pantheon/pull/1852)
+- Implement `eth_getproof` JSON RPC API [#1824](https://github.com/PegaSysEng/pantheon/pull/1824)
+- Database versioning and enable multi-column database [#1830](https://github.com/PegaSysEng/pantheon/pull/1830)
+- Disable Istanbul block [#1849](https://github.com/PegaSysEng/pantheon/pull/)
+- Disable smoke tests on windows [#1847](https://github.com/PegaSysEng/pantheon/pull/1847)
+- Add read-only blockchain factory method [#1845](https://github.com/PegaSysEng/pantheon/pull/)
 
 ## 1.2 
 
